@@ -58,7 +58,7 @@ func (b *Block) MarshalJSON() ([]byte, error) {
 func (b *Block) Hash() [32]byte {
 	m, _ := json.Marshal(b)
 	// fmt.Println(string(m))
-	return sha256.Sum256([]byte(m))
+	return sha256.Sum256([]byte(m)) // sha256.Sum256()는 해시 값을 만드는 함수
 }
 
 type Blockchain struct {
