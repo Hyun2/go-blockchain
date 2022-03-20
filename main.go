@@ -4,9 +4,14 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 )
+
+const MINING_DIFFICULTY = 3
+const MINING_SENDER = "THE BLOCKCHAIN"
+const MINING_REWARD = 1.0
 
 type Block struct {
 	timestamp    int64
@@ -25,8 +30,6 @@ type Block struct {
 
 // 	return &b
 // }
-
-const MINING_DIFFICULTY = 3
 
 func NewBlock(nonce int, previousHash [32]byte, transactions []*Transaction) *Block {
 	b := new(Block)
@@ -84,6 +87,7 @@ func (b *Block) Hash() [32]byte {
 type Blockchain struct {
 	transactionPool []*Transaction
 	chain           []*Block
+	address         string
 }
 
 func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *Block {
@@ -93,11 +97,12 @@ func (bc *Blockchain) CreateBlock(nonce int, previousHash [32]byte) *Block {
 	return b
 }
 
-func NewBlockchain() *Blockchain {
+func NewBlockchain(address string) *Blockchain {
 	// b := &Block{}
 	b := new(Block)
 	bc := new(Blockchain)
 	// bc := Blockchain{}
+	bc.address = address
 	bc.CreateBlock(0, b.Hash())
 
 	return bc
@@ -145,6 +150,17 @@ func (bc *Blockchain) ProofOfWork() int {
 	return nonce
 }
 
+func (bc *Blockchain) Mining() bool {
+	bc.AddTransaction(MINING_SENDER, bc.address, MINING_REWARD)
+	nonce := bc.ProofOfWork()
+	previousHash := bc.LastBlock().Hash()
+
+	bc.CreateBlock(nonce, previousHash)
+	log.Println("action=mining, status=success")
+
+	return true
+}
+
 type Transaction struct {
 	senderAddress    string
 	recipientAddress string
@@ -152,7 +168,7 @@ type Transaction struct {
 }
 
 func newTransaction(sender string, recipient string, value float32) *Transaction {
-	return &Transaction{sender, recipient, value}
+	return &Transaction{senderAddress: sender, recipientAddress: recipient, value: value}
 }
 
 func (t *Transaction) Print() {
@@ -183,19 +199,22 @@ func (bc *Blockchain) Print() {
 }
 
 func main() {
-	bc := NewBlockchain()
+	myAddress := "my_blockchain_address"
+	bc := NewBlockchain(myAddress)
 	bc.Print()
 
 	bc.AddTransaction("A", "B", 1.0)
-	previousHash := bc.LastBlock().Hash()
-	nonce := bc.ProofOfWork()
-	bc.CreateBlock(nonce, previousHash)
+	// previousHash := bc.LastBlock().Hash()
+	// nonce := bc.ProofOfWork()
+	// bc.CreateBlock(nonce, previousHash)
+	bc.Mining()
 	bc.Print()
 
 	bc.AddTransaction("C", "D", 2.0)
 	bc.AddTransaction("X", "Y", 3.0)
-	previousHash = bc.LastBlock().Hash()
-	nonce = bc.ProofOfWork()
-	bc.CreateBlock(nonce, previousHash)
+	// previousHash = bc.LastBlock().Hash()
+	// nonce = bc.ProofOfWork()
+	// bc.CreateBlock(nonce, previousHash)
+	bc.Mining()
 	bc.Print()
 }
